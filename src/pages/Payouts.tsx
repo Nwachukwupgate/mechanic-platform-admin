@@ -114,7 +114,17 @@ export default function Payouts() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <h2 className="text-lg font-bold text-slate-800 mb-2">Record payout</h2>
-            <p className="text-slate-600 mb-4">{payoutModal.mechanic.companyName} · Balance: ₦{(payoutModal.mechanic.balance?.balanceNaira ?? 0).toLocaleString()}</p>
+            <p className="text-slate-600 mb-2">{payoutModal.mechanic.companyName} · Balance: ₦{(payoutModal.mechanic.balance?.balanceNaira ?? 0).toLocaleString()}</p>
+            {payoutModal.mechanic.defaultBankAccount ? (
+              <p className="text-slate-700 mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm">
+                <span className="font-medium text-slate-800">Pay to:</span>{' '}
+                {payoutModal.mechanic.defaultBankAccount.bankName} · {payoutModal.mechanic.defaultBankAccount.accountNumber} · {payoutModal.mechanic.defaultBankAccount.accountName}
+              </p>
+            ) : (
+              <p className="text-amber-700 mb-4 p-3 bg-amber-50 rounded-lg border border-amber-200 text-sm">
+                No withdrawal account set. Mechanic should add a bank account in their Wallet.
+              </p>
+            )}
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Amount (₦)</label>
