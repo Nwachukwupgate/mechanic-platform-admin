@@ -33,16 +33,27 @@ export default function AdminLayout() {
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const permissions = Array.isArray(user?.adminPermissions) ? user.adminPermissions : []
   const isSuperadmin = permissions.length === 0
 
   const isActive = (path: string) => (path === '/' ? location.pathname === '/' : location.pathname.startsWith(path))
 
   return (
-    <div className="min-h-screen flex bg-slate-100">
+    <div className="min-h-screen flex bg-slate-100 relative">
+      {mobileNavOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          onClick={() => setMobileNavOpen(false)}
+          className="md:hidden fixed inset-0 z-20 bg-slate-900/50"
+        />
+      )}
       <aside
         className={`${
-          sidebarOpen ? 'w-56' : 'w-18'
+          mobileNavOpen ? 'translate-x-0' : '-translate-x-full'
+        } md:translate-x-0 fixed md:sticky top-0 left-0 z-30 h-screen ${
+          sidebarOpen ? 'w-56' : 'w-20'
         } bg-slate-900 text-white flex flex-col transition-all duration-200 shrink-0`}
       >
         <div className="p-4 flex items-center justify-between border-b border-slate-700">
@@ -64,6 +75,7 @@ export default function AdminLayout() {
             <Link
               key={path}
               to={path}
+              onClick={() => setMobileNavOpen(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                 isActive(path) ? 'bg-primary-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
               }`}
@@ -81,6 +93,7 @@ export default function AdminLayout() {
           <button
             type="button"
             onClick={() => {
+              setMobileNavOpen(false)
               logout()
               navigate('/login')
             }}
@@ -92,7 +105,18 @@ export default function AdminLayout() {
         </div>
       </aside>
       <main className="flex-1 overflow-auto">
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="md:hidden sticky top-0 z-10 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(true)}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-300 text-slate-700"
+          >
+            <Menu className="h-4 w-4" />
+            Menu
+          </button>
+          <span className="text-sm font-semibold text-slate-700">Admin</span>
+        </div>
+        <div className="p-4 md:p-6 max-w-7xl mx-auto">
           <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
