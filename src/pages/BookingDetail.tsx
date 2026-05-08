@@ -9,15 +9,34 @@ export default function BookingDetail() {
   const { id } = useParams()
   const [booking, setBooking] = useState<any>(null)
   const [disputeReason, setDisputeReason] = useState('')
+  const [nextStatus, setNextStatus] = useState('')
   const [resolving, setResolving] = useState(false)
 
   useEffect(() => {
     if (!id) return
     adminAPI
       .getBooking(id)
-      .then((r) => { setBooking(r.data); setDisputeReason(r.data.disputeReason || '') })
+      .then((r) => {
+        setBooking(r.data)
+        setDisputeReason(r.data.disputeReason || '')
+        setNextStatus(r.data.status || '')
+      })
       .catch(() => toast.error('Failed to load booking'))
   }, [id])
+
+  const updateStatus = async () => {
+    if (!id || !nextStatus) return
+    setResolving(true)
+    try {
+      const r = await adminAPI.setBookingStatus(id, nextStatus)
+      setBooking(r.data)
+      toast.success('Booking status updated')
+    } catch {
+      toast.error('Failed to update booking status')
+    } finally {
+      setResolving(false)
+    }
+  }
 
   const openDispute = async () => {
     if (!id) return
@@ -89,6 +108,28 @@ export default function BookingDetail() {
             ) : (
               <p className="text-slate-500">—</p>
             )}
+          </div>
+        </div>
+        <div className="mt-6 pt-6 border-t border-slate-100">
+          <h3 className="font-semibold text-slate-800 mb-2">Admin booking intervention</h3>
+          <div className="flex flex-wrap gap-2 items-center">
+            <select
+              value={nextStatus}
+              onChange={(e) => setNextStatus(e.target.value)}
+              className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
+            >
+              {['REQUESTED', 'ACCEPTED', 'IN_PROGRESS', 'DONE', 'PAID', 'DELIVERED', 'EXPIRED'].map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={updateStatus}
+              disabled={resolving || nextStatus === booking.status}
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 disabled:opacity-50"
+            >
+              {resolving ? 'Saving…' : 'Update status'}
+            </button>
           </div>
         </div>
       </div>

@@ -11,6 +11,8 @@ const typeLabels: Record<string, string> = {
   PLATFORM_PAYOUT: 'Payout',
   MECHANIC_FEE: 'Mechanic fee',
   REFUND: 'Refund',
+  ADMIN_MECHANIC_CREDIT: 'Admin mechanic credit',
+  ADMIN_MECHANIC_DEBIT: 'Admin mechanic debit',
 }
 
 const STATUS_COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#6366f1', '#14b8a6']

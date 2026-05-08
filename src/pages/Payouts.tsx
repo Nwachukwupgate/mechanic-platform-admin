@@ -3,6 +3,8 @@ import toast from 'react-hot-toast'
 import { adminAPI } from '../services/api'
 import { Banknote, Send } from 'lucide-react'
 import Pagination from '../components/Pagination'
+import ConfirmModal from '../components/ConfirmModal'
+import ModalShell from '../components/ModalShell'
 
 const LIMIT = 20
 
@@ -14,6 +16,7 @@ export default function Payouts() {
   const [amountNaira, setAmountNaira] = useState('')
   const [reference, setReference] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   useEffect(() => {
     adminAPI
@@ -33,10 +36,18 @@ export default function Payouts() {
       toast.error('Enter a valid amount')
       return
     }
+    setConfirmOpen(true)
+  }
+
+  const executePayout = async () => {
+    if (!payoutModal) return
+    const amount = Math.round(parseFloat(amountNaira) * 100)
+    if (!amount || amount <= 0) return
     setSubmitting(true)
     try {
       await adminAPI.recordPayout(payoutModal.mechanic.id, amount, reference || undefined)
       toast.success('Payout recorded')
+      setConfirmOpen(false)
       setPayoutModal(null)
       setAmountNaira('')
       setReference('')
@@ -111,8 +122,15 @@ export default function Payouts() {
 
       {/* Payout modal */}
       {payoutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+        <ModalShell
+          open={!!payoutModal}
+          onClose={() => {
+            setPayoutModal(null)
+            setAmountNaira('')
+            setReference('')
+            setConfirmOpen(false)
+          }}
+        >
             <h2 className="text-lg font-bold text-slate-800 mb-2">Record payout</h2>
             <p className="text-slate-600 mb-2">{payoutModal.mechanic.companyName} · Balance: ₦{(payoutModal.mechanic.balance?.balanceNaira ?? 0).toLocaleString()}</p>
             {payoutModal.mechanic.defaultBankAccount ? (
@@ -150,16 +168,29 @@ export default function Payouts() {
               </div>
             </div>
             <div className="flex gap-2 mt-6">
-              <button type="button" onClick={() => { setPayoutModal(null); setAmountNaira(''); setReference('') }} className="flex-1 px-4 py-2 border border-slate-200 rounded-lg font-medium text-slate-700 hover:bg-slate-50">
+              <button type="button" onClick={() => { setPayoutModal(null); setAmountNaira(''); setReference(''); setConfirmOpen(false) }} className="flex-1 px-4 py-2 border border-slate-200 rounded-lg font-medium text-slate-700 hover:bg-slate-50">
                 Cancel
               </button>
               <button type="button" onClick={submitPayout} disabled={submitting} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 disabled:opacity-50">
                 {submitting ? 'Recording…' : <><Banknote className="h-4 w-4" /> Record payout</>}
               </button>
             </div>
-          </div>
-        </div>
+        </ModalShell>
       )}
+      <ConfirmModal
+        open={confirmOpen}
+        title="Confirm payout"
+        message={`Record payout of ₦${(Math.round((parseFloat(amountNaira) || 0) * 100) / 100).toLocaleString()} to ${
+          payoutModal?.mechanic?.companyName ?? 'mechanic'
+        }?`}
+        confirmText="Record payout"
+        confirmVariant="primary"
+        loading={submitting}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          void executePayout()
+        }}
+      />
     </div>
   )
 }

@@ -1,5 +1,4 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { useAuthStore } from './store/authStore'
 import AdminLayout from './layouts/AdminLayout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -10,14 +9,30 @@ import MechanicDetail from './pages/MechanicDetail'
 import Bookings from './pages/Bookings'
 import BookingDetail from './pages/BookingDetail'
 import Transactions from './pages/Transactions'
+import TransactionDetail from './pages/TransactionDetail'
 import Payouts from './pages/Payouts'
+import Reports from './pages/Reports'
+import ReportDetail from './pages/ReportDetail'
+import AuditLogs from './pages/AuditLogs'
+import AdminUsers from './pages/AdminUsers'
+import { ADMIN_PERMISSIONS, PermissionGuard, ProtectedAdmin } from './components/PermissionGuard'
 
-function ProtectedAdmin({ children }: { children: React.ReactNode }) {
-  const token = useAuthStore((s) => s.token)
-  const user = useAuthStore((s) => s.user)
-  if (!token || !user || user.role !== 'ADMIN') return <Navigate to="/login" replace />
-  return <>{children}</>
-}
+const protectedRoutes = [
+  { path: 'dashboard', permission: ADMIN_PERMISSIONS.OVERVIEW, element: <Dashboard /> },
+  { path: 'users', permission: ADMIN_PERMISSIONS.USERS, element: <Users /> },
+  { path: 'users/:id', permission: ADMIN_PERMISSIONS.USERS, element: <UserDetail /> },
+  { path: 'mechanics', permission: ADMIN_PERMISSIONS.MECHANICS, element: <Mechanics /> },
+  { path: 'mechanics/:id', permission: ADMIN_PERMISSIONS.MECHANICS, element: <MechanicDetail /> },
+  { path: 'bookings', permission: ADMIN_PERMISSIONS.BOOKINGS, element: <Bookings /> },
+  { path: 'bookings/:id', permission: ADMIN_PERMISSIONS.BOOKINGS, element: <BookingDetail /> },
+  { path: 'transactions', permission: ADMIN_PERMISSIONS.PAYMENTS, element: <Transactions /> },
+  { path: 'transactions/:id', permission: ADMIN_PERMISSIONS.PAYMENTS, element: <TransactionDetail /> },
+  { path: 'payouts', permission: ADMIN_PERMISSIONS.PAYMENTS, element: <Payouts /> },
+  { path: 'reports', permission: ADMIN_PERMISSIONS.COMPLAINTS, element: <Reports /> },
+  { path: 'reports/:id', permission: ADMIN_PERMISSIONS.COMPLAINTS, element: <ReportDetail /> },
+  { path: 'audit', permission: ADMIN_PERMISSIONS.AUDIT, element: <AuditLogs /> },
+  { path: 'admins', permission: ADMIN_PERMISSIONS.ADMINS, element: <AdminUsers /> },
+] as const
 
 export default function App() {
   return (
@@ -31,15 +46,14 @@ export default function App() {
           </ProtectedAdmin>
         }
       >
-        <Route index element={<Dashboard />} />
-        <Route path="users" element={<Users />} />
-        <Route path="users/:id" element={<UserDetail />} />
-        <Route path="mechanics" element={<Mechanics />} />
-        <Route path="mechanics/:id" element={<MechanicDetail />} />
-        <Route path="bookings" element={<Bookings />} />
-        <Route path="bookings/:id" element={<BookingDetail />} />
-        <Route path="transactions" element={<Transactions />} />
-        <Route path="payouts" element={<Payouts />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        {protectedRoutes.map((route) => (
+          <Route
+            key={route.path}
+            path={route.path}
+            element={<PermissionGuard permission={route.permission}>{route.element}</PermissionGuard>}
+          />
+        ))}
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

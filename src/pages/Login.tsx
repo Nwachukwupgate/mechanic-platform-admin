@@ -19,10 +19,9 @@ export default function Login() {
     setLoading(true)
     try {
       const { data } = await adminAPI.login(email, password)
-      console.log("data here", data)
       setAuth(data.access_token, data.user)
       toast.success('Welcome back')
-      navigate('/')
+      navigate('/dashboard')
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Invalid email or password'))
     } finally {

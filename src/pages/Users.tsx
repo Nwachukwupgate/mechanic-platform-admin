@@ -42,7 +42,31 @@ export default function Users() {
             {u.emailVerified ? <CheckCircle className="h-5 w-5 text-emerald-500" /> : <XCircle className="h-5 w-5 text-slate-300" />}
           </td>
           <td className="p-4 text-slate-500">{format(new Date(u.createdAt), 'MMM d, yyyy')}</td>
-          <td className="p-4">
+          <td className="p-4 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await adminAPI.setUserEmailVerified(u.id, !u.emailVerified)
+                  setData((d) =>
+                    d
+                      ? {
+                          ...d,
+                          items: d.items.map((item) =>
+                            item.id === u.id ? { ...item, emailVerified: !u.emailVerified } : item,
+                          ),
+                        }
+                      : d,
+                  )
+                  toast.success(!u.emailVerified ? 'User verified' : 'User unverified')
+                } catch {
+                  toast.error('Failed to update user')
+                }
+              }}
+              className={`px-2 py-1 rounded text-xs font-medium ${u.emailVerified ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}
+            >
+              {u.emailVerified ? 'Unverify' : 'Verify'}
+            </button>
             <Link to={`/users/${u.id}`} className="text-primary-600 hover:underline font-medium">View</Link>
           </td>
         </tr>

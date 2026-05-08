@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { adminAPI } from '../services/api'
 import { CreditCard } from 'lucide-react'
@@ -11,6 +12,8 @@ const typeLabels: Record<string, string> = {
   PLATFORM_PAYOUT: 'Payout',
   MECHANIC_FEE: 'Mechanic fee',
   REFUND: 'Refund',
+  ADMIN_MECHANIC_CREDIT: 'Admin mechanic credit',
+  ADMIN_MECHANIC_DEBIT: 'Admin mechanic debit',
 }
 
 const LIMIT = 20
@@ -45,7 +48,7 @@ export default function Transactions() {
   }, [page, type, status, userId, mechanicId, dateFrom, dateTo])
 
   const tableBody = loading ? (
-    <TableLoader rows={10} cols={5} />
+    <TableLoader rows={10} cols={6} />
   ) : (
     <tbody className="divide-y divide-slate-100">
       {data?.items.map((t) => (
@@ -58,6 +61,7 @@ export default function Transactions() {
           <td className="p-4"><span className="px-2 py-1 rounded text-xs font-medium bg-slate-100 text-slate-700">{t.status}</span></td>
           <td className="p-4 text-slate-600">{t.user?.email ?? t.mechanic?.companyName ?? '—'}</td>
           <td className="p-4 text-slate-500">{format(new Date(t.createdAt), 'MMM d, yyyy HH:mm')}</td>
+          <td className="p-4"><Link to={`/transactions/${t.id}`} className="text-primary-600 hover:underline font-medium">View</Link></td>
         </tr>
       ))}
     </tbody>
@@ -92,6 +96,7 @@ export default function Transactions() {
                 <th className="text-left p-4">Status</th>
                 <th className="text-left p-4">User / Mechanic</th>
                 <th className="text-left p-4">Date</th>
+                <th className="text-left p-4"></th>
               </tr>
             </thead>
             {tableBody}

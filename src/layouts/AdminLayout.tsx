@@ -1,25 +1,31 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../store/authStore'
+import { ADMIN_PERMISSIONS, hasAdminPermission, useAuthStore } from '../store/authStore'
 import {
   LayoutDashboard,
   Users,
   Wrench,
   FileText,
   CreditCard,
+  AlertTriangle,
   Banknote,
   LogOut,
   Menu,
   ChevronRight,
+  History,
+  ShieldCheck,
 } from 'lucide-react'
 import { useState } from 'react'
 
 const nav = [
-  { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/users', icon: Users, label: 'Users' },
-  { path: '/mechanics', icon: Wrench, label: 'Mechanics' },
-  { path: '/bookings', icon: FileText, label: 'Bookings' },
-  { path: '/transactions', icon: CreditCard, label: 'Transactions' },
-  { path: '/payouts', icon: Banknote, label: 'Payouts' },
+  { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', permission: ADMIN_PERMISSIONS.OVERVIEW },
+  { path: '/users', icon: Users, label: 'Users', permission: ADMIN_PERMISSIONS.USERS },
+  { path: '/mechanics', icon: Wrench, label: 'Mechanics', permission: ADMIN_PERMISSIONS.MECHANICS },
+  { path: '/bookings', icon: FileText, label: 'Bookings', permission: ADMIN_PERMISSIONS.BOOKINGS },
+  { path: '/transactions', icon: CreditCard, label: 'Transactions', permission: ADMIN_PERMISSIONS.PAYMENTS },
+  { path: '/payouts', icon: Banknote, label: 'Payouts', permission: ADMIN_PERMISSIONS.PAYMENTS },
+  { path: '/reports', icon: AlertTriangle, label: 'Complaints', permission: ADMIN_PERMISSIONS.COMPLAINTS },
+  { path: '/audit', icon: History, label: 'Audit Logs', permission: ADMIN_PERMISSIONS.AUDIT },
+  { path: '/admins', icon: ShieldCheck, label: 'Admin Users', permission: ADMIN_PERMISSIONS.ADMINS },
 ]
 
 export default function AdminLayout() {
@@ -27,6 +33,8 @@ export default function AdminLayout() {
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const permissions = Array.isArray(user?.adminPermissions) ? user.adminPermissions : []
+  const isSuperadmin = permissions.length === 0
 
   const isActive = (path: string) => (path === '/' ? location.pathname === '/' : location.pathname.startsWith(path))
 
@@ -38,7 +46,7 @@ export default function AdminLayout() {
         } bg-slate-900 text-white flex flex-col transition-all duration-200 shrink-0`}
       >
         <div className="p-4 flex items-center justify-between border-b border-slate-700">
-          <Link to="/" className="font-bold text-lg truncate">
+          <Link to="/dashboard" className="font-bold text-lg truncate">
             {sidebarOpen ? 'Mechanic Admin' : 'MA'}
           </Link>
           <button
@@ -50,7 +58,9 @@ export default function AdminLayout() {
           </button>
         </div>
         <nav className="flex-1 p-2 space-y-0.5">
-          {nav.map(({ path, icon: Icon, label }) => (
+          {nav
+            .filter((item) => hasAdminPermission(user, item.permission))
+            .map(({ path, icon: Icon, label }) => (
             <Link
               key={path}
               to={path}
@@ -62,7 +72,7 @@ export default function AdminLayout() {
               {sidebarOpen && <span>{label}</span>}
               {sidebarOpen && isActive(path) && <ChevronRight className="h-4 w-4 ml-auto" />}
             </Link>
-          ))}
+            ))}
         </nav>
         <div className="p-2 border-t border-slate-700">
           <div className={`px-3 py-2 text-slate-400 text-sm truncate ${!sidebarOpen ? 'hidden' : ''}`}>
@@ -83,6 +93,27 @@ export default function AdminLayout() {
       </aside>
       <main className="flex-1 overflow-auto">
         <div className="p-6 max-w-7xl mx-auto">
+          <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm text-slate-500">Signed in as</p>
+                <p className="font-medium text-slate-800">{user?.email ?? 'admin'}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {isSuperadmin ? (
+                  <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                    superadmin
+                  </span>
+                ) : (
+                  permissions.map((perm) => (
+                    <span key={perm} className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                      {perm}
+                    </span>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
           <Outlet />
         </div>
       </main>

@@ -67,12 +67,13 @@ export default function Mechanics() {
                 <th className="text-left p-4">Company / Owner</th>
                 <th className="text-left p-4">Email</th>
                 <th className="text-left p-4">Verified</th>
+                <th className="text-left p-4">Available</th>
                 <th className="text-left p-4">Joined</th>
                 <th className="text-left p-4">Actions</th>
               </tr>
             </thead>
             {loading ? (
-          <TableLoader rows={10} cols={5} />
+          <TableLoader rows={10} cols={6} />
         ) : (
           <tbody className="divide-y divide-slate-100">
               {data?.items.map((m) => (
@@ -93,6 +94,13 @@ export default function Mechanics() {
                   <td className="p-4">
                     {m.isVerified ? <CheckCircle className="h-5 w-5 text-emerald-500" /> : <XCircle className="h-5 w-5 text-slate-300" />}
                   </td>
+                  <td className="p-4">
+                    {m.profile?.availability !== false ? (
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-emerald-100 text-emerald-700">Active</span>
+                    ) : (
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700">Suspended</span>
+                    )}
+                  </td>
                   <td className="p-4 text-slate-500">{format(new Date(m.createdAt), 'MMM d, yyyy')}</td>
                   <td className="p-4 flex items-center gap-2">
                     <button
@@ -101,6 +109,40 @@ export default function Mechanics() {
                       className={`px-2 py-1 rounded text-xs font-medium ${m.isVerified ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}
                     >
                       {m.isVerified ? 'Unverify' : 'Verify'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const currentlyActive = m.profile?.availability !== false
+                        try {
+                          await adminAPI.setMechanicStatus(m.id, {
+                            availability: !currentlyActive,
+                            isVerified: currentlyActive ? false : m.isVerified,
+                          })
+                          setData((d) =>
+                            d
+                              ? {
+                                  ...d,
+                                  items: d.items.map((item) =>
+                                    item.id === m.id
+                                      ? {
+                                          ...item,
+                                          isVerified: currentlyActive ? false : item.isVerified,
+                                          profile: { ...(item.profile || {}), availability: !currentlyActive },
+                                        }
+                                      : item,
+                                  ),
+                                }
+                              : d,
+                          )
+                          toast.success(currentlyActive ? 'Mechanic suspended' : 'Mechanic reactivated')
+                        } catch {
+                          toast.error('Failed to update mechanic status')
+                        }
+                      }}
+                      className={`px-2 py-1 rounded text-xs font-medium ${m.profile?.availability !== false ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}
+                    >
+                      {m.profile?.availability !== false ? 'Suspend' : 'Reactivate'}
                     </button>
                     <Link to={`/mechanics/${m.id}`} className="text-primary-600 hover:underline font-medium">View</Link>
                   </td>
