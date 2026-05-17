@@ -88,6 +88,17 @@ export default function BookingDetail() {
             <p className="text-slate-500 mt-1">ID: {booking.id}</p>
             <p className="text-slate-600 mt-2">Status: <span className="font-medium">{booking.status}</span></p>
             {booking.estimatedCost != null && <p className="text-slate-600 mt-0.5">Estimated: ₦{Number(booking.estimatedCost).toLocaleString()}</p>}
+            {booking.settlement && (
+              <div className="mt-3 p-3 rounded-lg bg-slate-50 border border-slate-100 text-sm space-y-1">
+                <p className="font-medium text-slate-800">Settlement (frozen at payment)</p>
+                <p>Parts: ₦{(booking.settlement.partsMinor / 100).toLocaleString()}</p>
+                <p>Labour: ₦{(booking.settlement.labourMinor / 100).toLocaleString()}</p>
+                <p>Customer total: ₦{(booking.settlement.customerTotalMinor / 100).toLocaleString()}</p>
+                <p>Platform fee (labour): ₦{(booking.settlement.platformFeeMinor / 100).toLocaleString()}</p>
+                <p>Mechanic earnings: ₦{(booking.settlement.mechanicEarningsMinor / 100).toLocaleString()}</p>
+                {booking.settlement.isLegacy && <p className="text-xs text-amber-700">Legacy split (no breakdown on file)</p>}
+              </div>
+            )}
             {booking.paidAt && <p className="text-slate-500 text-sm mt-1">Paid {format(new Date(booking.paidAt), 'PP')} · {booking.paymentMethod ?? '—'}</p>}
           </div>
         </div>
