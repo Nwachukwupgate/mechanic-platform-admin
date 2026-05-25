@@ -66,6 +66,7 @@ export default function Bookings() {
                 <th className="text-left p-4">Booking</th>
                 <th className="text-left p-4">User</th>
                 <th className="text-left p-4">Mechanic</th>
+                <th className="text-left p-4">Payment</th>
                 <th className="text-left p-4">Status</th>
                 <th className="text-left p-4">Dispute</th>
                 <th className="text-left p-4">Date</th>
@@ -73,7 +74,7 @@ export default function Bookings() {
               </tr>
             </thead>
             {loading ? (
-          <TableLoader rows={10} cols={7} />
+          <TableLoader rows={10} cols={8} />
         ) : (
           <tbody className="divide-y divide-slate-100">
               {data?.items.map((b) => (
@@ -87,6 +88,17 @@ export default function Bookings() {
                   </td>
                   <td className="p-4 text-slate-600">{b.user?.email}</td>
                   <td className="p-4 text-slate-600">{b.mechanic?.companyName ?? '—'}</td>
+                  <td className="p-4">
+                    {b.isInspectionFlow ? (
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-violet-100 text-violet-800">
+                        {b.paymentHint ?? 'Inspection'}
+                      </span>
+                    ) : b.paidAt ? (
+                      <span className="text-xs text-emerald-700">Paid</span>
+                    ) : (
+                      <span className="text-xs text-slate-400">—</span>
+                    )}
+                  </td>
                   <td className="p-4"><span className="px-2 py-1 rounded text-xs font-medium bg-slate-100 text-slate-700">{b.status}</span></td>
                   <td className="p-4">
                     {b.disputeReason && !b.disputeResolvedAt ? (

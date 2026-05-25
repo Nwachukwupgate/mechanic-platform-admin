@@ -170,6 +170,16 @@ export default function TransactionDetail() {
         </div>
         {tx.reference && <p className="mt-3 text-sm text-slate-600">Reference: {tx.reference}</p>}
         {tx.paystackReference && <p className="text-sm text-slate-600">Paystack reference: {tx.paystackReference}</p>}
+        {tx.metadata && typeof tx.metadata === 'object' && (tx.metadata as { settlementPhase?: string }).settlementPhase ? (
+          <p className="text-sm text-violet-700 mt-2">
+            Payment phase: {(tx.metadata as { settlementPhase: string }).settlementPhase.replace(/_/g, ' ')}
+          </p>
+        ) : null}
+        {tx.bookingId && (
+          <Link to={`/bookings/${tx.bookingId}`} className="mt-3 inline-block text-sm text-primary-600 hover:underline">
+            View booking →
+          </Link>
+        )}
       </div>
 
       {tx.status === 'PENDING' && (
