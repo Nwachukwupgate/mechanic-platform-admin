@@ -8,11 +8,15 @@ import Mechanics from './pages/Mechanics'
 import MechanicDetail from './pages/MechanicDetail'
 import Bookings from './pages/Bookings'
 import BookingDetail from './pages/BookingDetail'
+import Quotes from './pages/Quotes'
 import Transactions from './pages/Transactions'
 import TransactionDetail from './pages/TransactionDetail'
+import Webhooks from './pages/Webhooks'
 import Payouts from './pages/Payouts'
 import Reports from './pages/Reports'
 import ReportDetail from './pages/ReportDetail'
+import Ratings from './pages/Ratings'
+import Notifications from './pages/Notifications'
 import AuditLogs from './pages/AuditLogs'
 import AdminUsers from './pages/AdminUsers'
 import { ADMIN_PERMISSIONS, PermissionGuard, ProtectedAdmin } from './components/PermissionGuard'
@@ -25,11 +29,15 @@ const protectedRoutes = [
   { path: 'mechanics/:id', permission: ADMIN_PERMISSIONS.MECHANICS, element: <MechanicDetail /> },
   { path: 'bookings', permission: ADMIN_PERMISSIONS.BOOKINGS, element: <Bookings /> },
   { path: 'bookings/:id', permission: ADMIN_PERMISSIONS.BOOKINGS, element: <BookingDetail /> },
+  { path: 'quotes', permission: ADMIN_PERMISSIONS.BOOKINGS, element: <Quotes /> },
   { path: 'transactions', permission: ADMIN_PERMISSIONS.PAYMENTS, element: <Transactions /> },
   { path: 'transactions/:id', permission: ADMIN_PERMISSIONS.PAYMENTS, element: <TransactionDetail /> },
+  { path: 'webhooks', permission: ADMIN_PERMISSIONS.PAYMENTS, element: <Webhooks /> },
   { path: 'payouts', permission: ADMIN_PERMISSIONS.PAYMENTS, element: <Payouts /> },
   { path: 'reports', permission: ADMIN_PERMISSIONS.COMPLAINTS, element: <Reports /> },
   { path: 'reports/:id', permission: ADMIN_PERMISSIONS.COMPLAINTS, element: <ReportDetail /> },
+  { path: 'ratings', permission: ADMIN_PERMISSIONS.BOOKINGS, element: <Ratings /> },
+  { path: 'notifications', permission: ADMIN_PERMISSIONS.OVERVIEW, element: <Notifications /> },
   { path: 'audit', permission: ADMIN_PERMISSIONS.AUDIT, element: <AuditLogs /> },
   { path: 'admins', permission: ADMIN_PERMISSIONS.ADMINS, element: <AdminUsers /> },
 ] as const
@@ -55,7 +63,7 @@ export default function App() {
           />
         ))}
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   )
 }

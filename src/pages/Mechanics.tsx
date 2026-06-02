@@ -1,162 +1,44 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import toast from 'react-hot-toast'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { adminAPI } from '../services/api'
-import { Search, Wrench, CheckCircle, XCircle } from 'lucide-react'
-import { format } from 'date-fns'
-import TableLoader from '../components/TableLoader'
-import Pagination from '../components/Pagination'
+import { fmtShortDate } from '../lib/adminFormat'
+import { AdminPageHeader, AdminTable, AdminTh, AdminTd, AdminPagination, AdminLink, AdminBadge } from '../components/admin/AdminUi'
+import { AdminExportButton } from '../components/admin/AdminExportButton'
 
-const LIMIT = 20
-
-export default function Mechanics() {
-  const [data, setData] = useState<{ items: any[]; total: number; page: number; totalPages: number } | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState(1)
+export default function AdminMechanics() {
+  const [params, setParams] = useSearchParams()
+  const page = Number(params.get('page') || 1)
   const [search, setSearch] = useState('')
-  const [isVerified, setIsVerified] = useState<string>('')
+  const [data, setData] = useState<any>(null)
 
   useEffect(() => {
-    setLoading(true)
-    adminAPI
-      .getMechanics({ page, limit: LIMIT, search: search || undefined, isVerified: isVerified === 'true' ? true : isVerified === 'false' ? false : undefined })
-      .then((r) => setData(r.data))
-      .catch(() => toast.error('Failed to load mechanics'))
-      .finally(() => setLoading(false))
-  }, [page, search, isVerified])
-
-  const toggleVerify = async (id: string, current: boolean) => {
-    try {
-      await adminAPI.setMechanicVerified(id, !current)
-      toast.success(current ? 'Mechanic unverified' : 'Mechanic verified')
-      setData((d) => d ? { ...d, items: d.items.map((m) => (m.id === id ? { ...m, isVerified: !current } : m)) } : null)
-    } catch (err) {
-      toast.error('Failed to update')
-    }
-  }
+    adminAPI.listMechanics({ page, limit: 25, search: search || undefined }).then((r) => setData(r.data))
+  }, [page, search])
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-slate-800 mb-6">Mechanics</h1>
-      <div className="bg-white rounded-xl shadow border border-slate-100 overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex flex-wrap gap-4 items-center">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by name or email..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-              className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm"
-            />
-          </div>
-          <select
-            value={isVerified}
-            onChange={(e) => { setIsVerified(e.target.value); setPage(1) }}
-            className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
-          >
-            <option value="">All</option>
-            <option value="true">Verified</option>
-            <option value="false">Not verified</option>
-          </select>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-slate-600 font-medium">
-              <tr>
-                <th className="text-left p-4">Company / Owner</th>
-                <th className="text-left p-4">Email</th>
-                <th className="text-left p-4">Verified</th>
-                <th className="text-left p-4">Available</th>
-                <th className="text-left p-4">Joined</th>
-                <th className="text-left p-4">Actions</th>
-              </tr>
-            </thead>
-            {loading ? (
-          <TableLoader rows={10} cols={6} />
-        ) : (
-          <tbody className="divide-y divide-slate-100">
-              {data?.items.map((m) => (
-                <tr key={m.id} className="hover:bg-slate-50/50">
-                  <td className="p-4">
-                    <span className="flex items-center gap-3 font-medium text-slate-800">
-                      {m.profile?.avatar ? (
-                        <img src={m.profile.avatar} alt="" className="h-10 w-10 rounded-full object-cover border border-slate-200" />
-                      ) : (
-                        <div className="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
-                          <Wrench className="h-5 w-5 text-slate-500" />
-                        </div>
-                      )}
-                      {m.companyName} · {m.ownerFullName}
-                    </span>
-                  </td>
-                  <td className="p-4 text-slate-600">{m.email}</td>
-                  <td className="p-4">
-                    {m.isVerified ? <CheckCircle className="h-5 w-5 text-emerald-500" /> : <XCircle className="h-5 w-5 text-slate-300" />}
-                  </td>
-                  <td className="p-4">
-                    {m.profile?.availability !== false ? (
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-emerald-100 text-emerald-700">Active</span>
-                    ) : (
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700">Suspended</span>
-                    )}
-                  </td>
-                  <td className="p-4 text-slate-500">{format(new Date(m.createdAt), 'MMM d, yyyy')}</td>
-                  <td className="p-4 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => toggleVerify(m.id, m.isVerified)}
-                      className={`px-2 py-1 rounded text-xs font-medium ${m.isVerified ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}
-                    >
-                      {m.isVerified ? 'Unverify' : 'Verify'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const currentlyActive = m.profile?.availability !== false
-                        try {
-                          await adminAPI.setMechanicStatus(m.id, {
-                            availability: !currentlyActive,
-                            isVerified: currentlyActive ? false : m.isVerified,
-                          })
-                          setData((d) =>
-                            d
-                              ? {
-                                  ...d,
-                                  items: d.items.map((item) =>
-                                    item.id === m.id
-                                      ? {
-                                          ...item,
-                                          isVerified: currentlyActive ? false : item.isVerified,
-                                          profile: { ...(item.profile || {}), availability: !currentlyActive },
-                                        }
-                                      : item,
-                                  ),
-                                }
-                              : d,
-                          )
-                          toast.success(currentlyActive ? 'Mechanic suspended' : 'Mechanic reactivated')
-                        } catch {
-                          toast.error('Failed to update mechanic status')
-                        }
-                      }}
-                      className={`px-2 py-1 rounded text-xs font-medium ${m.profile?.availability !== false ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}
-                    >
-                      {m.profile?.availability !== false ? 'Suspend' : 'Reactivate'}
-                    </button>
-                    <Link to={`/mechanics/${m.id}`} className="text-primary-600 hover:underline font-medium">View</Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-        )}
-          </table>
-        </div>
-        {!loading && data?.items.length === 0 && <div className="p-12 text-center text-slate-500">No mechanics found.</div>}
-        {!loading && data && (
-          <Pagination page={page} totalPages={data.totalPages} total={data.total} limit={LIMIT} onPageChange={setPage} />
-        )}
+    <>
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+        <AdminPageHeader title="Mechanics" subtitle="Workshops and verification status." />
+        <AdminExportButton resource="mechanics" />
       </div>
-    </div>
+      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search" className="mb-4 w-full max-w-md px-3 py-2 border rounded-lg text-sm" />
+      <AdminTable>
+        <thead><tr><AdminTh>Company</AdminTh><AdminTh>Owner</AdminTh><AdminTh>Verified</AdminTh><AdminTh>Joined</AdminTh></tr></thead>
+        <tbody>
+          {data?.items?.map((m: any) => (
+            <tr key={m.id}>
+              <AdminTd><AdminLink to={`/mechanics/${m.id}`}>{m.companyName}</AdminLink></AdminTd>
+              <AdminTd>{m.ownerFullName}</AdminTd>
+              <AdminTd>
+                <AdminBadge tone={m.isVerified ? 'green' : 'slate'}>{m.isVerified ? 'Verified' : 'Unverified'}</AdminBadge>
+                {m.suspendedAt ? <> <AdminBadge tone="red">Suspended</AdminBadge></> : null}
+              </AdminTd>
+              <AdminTd>{fmtShortDate(m.createdAt)}</AdminTd>
+            </tr>
+          ))}
+        </tbody>
+      </AdminTable>
+      {data && <AdminPagination page={data.page} totalPages={data.totalPages} total={data.total} onPage={(p) => { const n = new URLSearchParams(params); n.set('page', String(p)); setParams(n) }} />}
+    </>
   )
 }

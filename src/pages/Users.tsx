@@ -1,131 +1,49 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import toast from 'react-hot-toast'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { adminAPI } from '../services/api'
-import { Search, Mail, CheckCircle, XCircle } from 'lucide-react'
-import { format } from 'date-fns'
-import TableLoader from '../components/TableLoader'
-import Pagination from '../components/Pagination'
+import { fmtShortDate } from '../lib/adminFormat'
+import { AdminPageHeader, AdminTable, AdminTh, AdminTd, AdminPagination, AdminLink, AdminBadge } from '../components/admin/AdminUi'
+import { AdminExportButton } from '../components/admin/AdminExportButton'
 
-const LIMIT = 20
-
-export default function Users() {
-  const [data, setData] = useState<{ items: any[]; total: number; page: number; totalPages: number } | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
-  const [emailVerified, setEmailVerified] = useState<string>('')
+export default function AdminUsers() {
+  const [params, setParams] = useSearchParams()
+  const page = Number(params.get('page') || 1)
+  const [search, setSearch] = useState(params.get('search') || '')
+  const [data, setData] = useState<any>(null)
 
   useEffect(() => {
-    setLoading(true)
-    adminAPI
-      .getUsers({ page, limit: LIMIT, search: search || undefined, emailVerified: emailVerified === 'true' ? true : emailVerified === 'false' ? false : undefined })
-      .then((r) => setData(r.data))
-      .catch(() => toast.error('Failed to load users'))
-      .finally(() => setLoading(false))
-  }, [page, search, emailVerified])
-
-  const tableBody = loading ? (
-    <TableLoader rows={10} />
-  ) : (
-    <tbody className="divide-y divide-slate-100">
-      {data?.items.map((u) => (
-        <tr key={u.id} className="hover:bg-slate-50/50">
-          <td className="p-4">
-            <span className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-slate-400" />
-              {u.email}
-            </span>
-          </td>
-          <td className="p-4">{[u.firstName, u.lastName].filter(Boolean).join(' ') || '—'}</td>
-          <td className="p-4">
-            {u.emailVerified ? <CheckCircle className="h-5 w-5 text-emerald-500" /> : <XCircle className="h-5 w-5 text-slate-300" />}
-          </td>
-          <td className="p-4 text-slate-500">{format(new Date(u.createdAt), 'MMM d, yyyy')}</td>
-          <td className="p-4 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  await adminAPI.setUserEmailVerified(u.id, !u.emailVerified)
-                  setData((d) =>
-                    d
-                      ? {
-                          ...d,
-                          items: d.items.map((item) =>
-                            item.id === u.id ? { ...item, emailVerified: !u.emailVerified } : item,
-                          ),
-                        }
-                      : d,
-                  )
-                  toast.success(!u.emailVerified ? 'User verified' : 'User unverified')
-                } catch {
-                  toast.error('Failed to update user')
-                }
-              }}
-              className={`px-2 py-1 rounded text-xs font-medium ${u.emailVerified ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}
-            >
-              {u.emailVerified ? 'Unverify' : 'Verify'}
-            </button>
-            <Link to={`/users/${u.id}`} className="text-primary-600 hover:underline font-medium">View</Link>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  )
+    adminAPI.listUsers({ page, limit: 25, search: search || undefined }).then((r) => setData(r.data))
+  }, [page, search])
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-slate-800 mb-6">Users</h1>
-      <div className="bg-white rounded-xl shadow border border-slate-100 overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex flex-wrap gap-4 items-center">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by email or name..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-              className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm"
-            />
-          </div>
-          <select
-            value={emailVerified}
-            onChange={(e) => { setEmailVerified(e.target.value); setPage(1) }}
-            className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
-          >
-            <option value="">All verification</option>
-            <option value="true">Verified</option>
-            <option value="false">Not verified</option>
-          </select>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-slate-600 font-medium">
-              <tr>
-                <th className="text-left p-4">Email</th>
-                <th className="text-left p-4">Name</th>
-                <th className="text-left p-4">Verified</th>
-                <th className="text-left p-4">Joined</th>
-                <th className="text-left p-4"></th>
-              </tr>
-            </thead>
-            {tableBody}
-          </table>
-        </div>
-        {!loading && data?.items.length === 0 && (
-          <div className="p-12 text-center text-slate-500">No users found.</div>
-        )}
-        {!loading && data && (
-          <Pagination
-            page={page}
-            totalPages={data.totalPages}
-            total={data.total}
-            limit={LIMIT}
-            onPageChange={setPage}
-          />
-        )}
+    <>
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+        <AdminPageHeader title="Users" subtitle="All customer accounts." />
+        <AdminExportButton resource="users" />
       </div>
-    </div>
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search email or name"
+        className="mb-4 w-full max-w-md px-3 py-2 border rounded-lg text-sm"
+      />
+      <AdminTable>
+        <thead><tr><AdminTh>Name</AdminTh><AdminTh>Email</AdminTh><AdminTh>Status</AdminTh><AdminTh>Joined</AdminTh></tr></thead>
+        <tbody>
+          {data?.items?.map((u: any) => (
+            <tr key={u.id}>
+              <AdminTd><AdminLink to={`/users/${u.id}`}>{u.firstName} {u.lastName}</AdminLink></AdminTd>
+              <AdminTd>{u.email}</AdminTd>
+              <AdminTd>
+                <AdminBadge tone={u.emailVerified ? 'green' : 'amber'}>{u.emailVerified ? 'Verified' : 'Unverified'}</AdminBadge>
+                {u.suspendedAt ? <> <AdminBadge tone="red">Suspended</AdminBadge></> : null}
+              </AdminTd>
+              <AdminTd>{fmtShortDate(u.createdAt)}</AdminTd>
+            </tr>
+          ))}
+        </tbody>
+      </AdminTable>
+      {data && <AdminPagination page={data.page} totalPages={data.totalPages} total={data.total} onPage={(p) => { const n = new URLSearchParams(params); n.set('page', String(p)); setParams(n) }} />}
+    </>
   )
 }
